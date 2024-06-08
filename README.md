@@ -16,3 +16,6 @@ Github Repository for the ACE6263 Assignment (Triemester March 2024), GlowFrame
 
 // Please run examples "1a" to "1g" to ensure that the hardware circuit is working.
 // Examples can be found in "examples" folder.
+
+// Circuit connection
+![image](https://github.com/ASoulNamedLeo/GlowFrame_ACE6263_ESD/assets/127149357/504afcee-0199-4183-b0b6-e7a4dddbdda1)
