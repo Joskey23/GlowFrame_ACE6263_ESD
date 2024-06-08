@@ -3,7 +3,7 @@ Github Repository for the ACE6263 Assignment (Triemester March 2024), GlowFrame
 
 // In your Arduino IDE, under "Boards Manager", please download the "esp32" by Espressif Systems, version 2.0.17
 // version 3.0.0 or later won't work with our code
-
+--------------------------------------------------------
 // Under "Library Manager", please ensure that the following libraries are installed
 // "LiquidCrystal" by Arduino, Adafruit (Version 1.0.7)
 // "Adafruit APDS9960 Library" by Adafruit (Version 1.3.0)
