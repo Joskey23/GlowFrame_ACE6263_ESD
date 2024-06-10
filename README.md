@@ -14,6 +14,7 @@ Github Repository for the ACE6263 Assignment (Triemester March 2024), GlowFrame
 8) "SparkFun APDS9960 RGB and Gesture Sensor Arduino Library" by SparkFun (Version 1.4.2)
 
 // Please run examples "1a" to "1g" to ensure that the hardware circuit is working. Examples can be found in "examples" folder.
+// Note: Upload to DOIT ESP32 devkit V1 (normally COM6)
 
 // Circuit connection
 ![image](https://github.com/ASoulNamedLeo/GlowFrame_ACE6263_ESD/assets/127149357/483753c2-a208-4d4b-8ec5-8f2167ac9ad4)
