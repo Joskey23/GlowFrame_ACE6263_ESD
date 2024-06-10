@@ -12,6 +12,7 @@ Github Repository for the ACE6263 Assignment (Triemester March 2024), GlowFrame
 6) "Adafruit Unified Sensor" by Adafruit (Version 1.1.14)
 7) "FastLED" by Daniel Garcia (Version 3.7.0)
 8) "SparkFun APDS9960 RGB and Gesture Sensor Arduino Library" by SparkFun (Version 1.4.2)
+9) "Adafruit NeoPixel" by Adafruit (Version 1.12.2)
 
 // Please run examples "1a" to "1g" to ensure that the hardware circuit is working. Examples can be found in "examples" folder.
 // Note: Upload to DOIT ESP32 devkit V1 (normally COM6)
