@@ -9,7 +9,7 @@
 #define BLYNK_TEMPLATE_NAME "GLOWFLOW"
 #include <BlynkSimpleEsp32.h>
 
-#ifdef _AVR_
+#ifdef __AVR__
 #include <avr/power.h>
 #endif
 
@@ -49,17 +49,17 @@ char pass[] = "B152@2002";
 uint32_t color = 0;
 int distance;
 bool hibernate = true;
-bool GestureON = false;
+bool GestureON= false;
 const int HIBERNATION_DISTANCE = 200;  // Distance threshold for hibernation in millimeters
 unsigned long lastGestureTime = 0;
-const unsigned long gestureInterval = 10000;  // 10 seconds
-bool ledState = false;                        // LED strip state
-bool done_interaction = false;
+const unsigned long gestureInterval = 10000; // 10 seconds
+bool ledState = false; // LED strip state
+bool done_interaction=false;
 void setup() {
   Serial.begin(115200);
   delay(100);
   Blynk.begin(auth, ssid, pass);
-  pinMode(INT_PIN, INPUT);
+    pinMode(INT_PIN, INPUT);
   pinMode(buzzer, OUTPUT);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -70,119 +70,131 @@ void setup() {
 
   // Initialize NeoPixel strip
   strip.begin();
-  strip.show();  // Initialize all pixels to 'off'
+  strip.show(); // Initialize all pixels to 'off'
 
-  if (!apds.begin()) {
+  if(!apds.begin()){
     Serial.println("failed to initialize device! Please check your wiring.");
-  } else Serial.println("Device initialized!");
+  }
+  else Serial.println("Device initialized!");
 
+  
+  // Enable proximity engine and interrupts
   apds.enableProximity(true);
+  //apds.enableGesture(true);
+    // Optionally set the interrupt threshold
+  //apds.setProximityInterruptThreshold(50, 100, 1);
+  //apds.enableProximityInterrupt();
+  //apds.setProximityInterruptThreshold(0, 175);
+
+  //enable the proximity interrupt
+  //apds.enableProximityInterrupt();
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println(F("SSD1306 allocation failed"));
-    for (;;)
-      ;
+    for (;;);
   }
 
   delay(2000);
   display.setTextColor(WHITE);
   enterHibernateMode();
+  // Attach the interrupt pin to an ISR
+  //attachInterrupt(digitalPinToInterrupt(INT_PIN), proximityInterrupt, FALLING);
 }
 
 void loop() {
   //distance = apds.readProximity();
   //uint8_t gesture = apds.readGesture();
-  // Read color data
-  Blynk.run();
-  if (ledState) {
-    apds.enableProximity(false);
-    while (ledState) {
+    // Read color data
+  done_interaction=false;
+  Blynkrun();
+  //start main program
+  OLED_display(2, 0, "Rise and  Shine!");
+  play_tone1();
 
+  while(!done_interaction){
+  if(!hibernate){
+  OLED_display(2, 0, "How are you?");
+  }
+  
+  delay(2000);//
+    Blynkrun();
+if (!GestureON){
+  done_interaction=false;
+    // If no gesture was detected, check for proximity
+    apds.enableGesture(false);
+  // Read proximity data
+  uint8_t proximity_data = apds.readProximity();
+  Serial.println(proximity_data);
+  // Handle proximity data
+  if (proximity_data > 50) {
+    exitHibernateMode();
+    GestureON=true;
+  } 
+  if (proximity_data <= 10) {
+    enterHibernateMode();
+  }
+
+        }
+
+// Check if a gesture has occurred
+if(GestureON){
+  Serial.println("Enter gesture interaction mode");
+  delay(2000);
+  lastGestureTime = millis();
+  while(GestureON){
+  apds.enableGesture(true);
+  uint8_t gesture = apds.readGesture();
+  Blynk.run();
+  ledSet();
+  if (gesture != 0)
+      {
+        
+      Serial.println("in the loop, need more accurate gesture");
+      handGesture();
+      lastGestureTime = millis();
+      GestureON = true;
+    //exitHibernateMode();
+    
+      }
+  if (millis() - lastGestureTime > gestureInterval) {
+      // It's been more than 10 seconds since the last gesture
+      Serial.println("abort");
+      GestureON = false;
+      apds.enableGesture(false);
+      done_interaction=true;
+      }
+    }
+}
+delay(50);//for system stability
+  }
+OLED_display(2,0,"Thanks for using me!");
+play_tone2();
+delay(1000);
+
+
+
+    // Additional low-power tasks or sleep mode here 
+}
+void Blynkrun(){
+    Blynk.run();
+    if (ledState) {
+      apds.enableProximity(false);
+    while(ledState){
+      
       NeoAmbience();
-      Blynk.run();
+      Blynk.run();  
       ledSet();
     }
-
-  } else {
+    
+  } 
+  else {
     // Turn off NeoPixel strip
     strip.clear();
     strip.show();
     apds.enableProximity(true);
   }
-
-  //start main program
-  OLED_display(2, 0, "Rise and  Shine!");
-  play_tone1();
-
-  while (done_interaction = false) {
-    OLED_display(2, 0, "How are you?");
-    delay(2000);
-    Blynk.run();
-    if (ledState) {
-      apds.enableProximity(false);
-      while (ledState) {
-
-        NeoAmbience();
-        Blynk.run();
-        ledSet();
-      }
-    } else {
-      // Turn off NeoPixel strip
-      strip.clear();
-      strip.show();
-      apds.enableProximity(true);
-    }
-    if (!GestureON) {
-      // If no gesture was detected, check for proximity
-      apds.enableGesture(false);
-      // Read proximity data
-      uint8_t proximity_data = apds.readProximity();
-      Serial.println(proximity_data);
-      // Handle proximity data
-      if (proximity_data > 10) {
-        exitHibernateMode();
-        GestureON = true;
-      }
-      if (proximity_data <= 10) {
-        enterHibernateMode();
-      }
-    }
-
-    // Check if a gesture has occurred
-    if (GestureON) {
-      Serial.println("Enter gesture interaction mode");
-      delay(2000);
-      lastGestureTime = millis();
-      while (GestureON) {
-        apds.enableGesture(true);
-        uint8_t gesture = apds.readGesture();
-        Blynk.run();
-        ledSet();
-        if (gesture != 0) {
-
-          Serial.println("in the loop, need more accurate gesture");
-          handGesture();
-          lastGestureTime = millis();
-          GestureON = true;
-          //exitHibernateMode();
-        }
-        if (millis() - lastGestureTime > gestureInterval) {
-          // It's been more than 10 seconds since the last gesture
-          Serial.println("abort");
-          GestureON = false;
-          apds.enableGesture(false);
-          done_interaction = true;
-        }
-      }
-    }
-    delay(50);  //for system stability
-  }
-
-  OLED_display(2, 0, "Thanks for using me!");
-  play_tone2();
-  delay(1000);
+  
 }
-
 void handGesture() {
   uint8_t gesture = apds.readGesture();
   display.clearDisplay();
@@ -227,18 +239,16 @@ void handGesture() {
       noTone(buzzer);
       break;
     default:
-      //Serial.println("No gesture");
       return;
   }
-  //ledSet();
 }
 
-void NeoAmbience() {
-  // Enable color sensing
-
+void NeoAmbience(){
+    // Enable color sensing
+  
   apds.enableColor(true);
   uint16_t r, g, b, c;
-  while (!apds.colorDataReady()) {
+    while(!apds.colorDataReady()){
     delay(5);
   }
   apds.getColorData(&r, &g, &b, &c);
@@ -262,42 +272,44 @@ void NeoAmbience() {
     // Turn off
     neo_brightness = 0;
   }
-  // Set the brightness of NeoPixel strip
+    // Set the brightness of NeoPixel strip
   strip.setBrightness(neo_brightness);
-  // Update the strip to set new brightness
-  strip.show();
-  apds.enableColor(false);
+      // Update the strip to set new brightness
+    strip.show();
+    apds.enableColor(false);
 }
-
 void enterHibernateMode() {
   hibernate = true;
   if (!hibernate) return;
-
+  
   // Turn off NeoPixel strip
   strip.clear();
   strip.show();
-
+  
   // Clear OLED display
   display.clearDisplay();
   display.display();
-
+  
+  //hibernate = true;
 }
-
 void exitHibernateMode() {
+    
   hibernate = false;
   if (hibernate) return;
-
+  
   // Turn on NeoPixel strip
-  strip.fill(strip.Color(255, 255, 255));  // White color for example
+  strip.fill(strip.Color(255,255,255)); // White color for example
   strip.show();
-
+  
   // Turn on OLED display with some text
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
+  display.setCursor(0,0);
   display.println(F("Proximity Detected!"));
   display.display();
+  
+  //hibernate = false;
 }
 
 void ledSet() {
@@ -305,6 +317,58 @@ void ledSet() {
   strip.fill(color, 0, strip.numPixels());
   strip.show();
   display.display();
+}
+
+void OLED_display(int textsize, int y, String text) {
+  display.clearDisplay();
+  display.setTextSize(textsize);
+  display.setCursor(0, y);
+  display.print(text);
+  display.display();
+}
+
+void play_tone1() {
+  tone(buzzer, C4, QUARTER);
+  delay(QUARTER);
+
+  tone(buzzer, E4, QUARTER);
+  delay(QUARTER);
+
+  tone(buzzer, G4, HALF);
+  delay(HALF);
+  noTone(buzzer);
+}
+
+void play_tone2() {
+  tone(buzzer, G4, QUARTER);
+  delay(QUARTER);
+
+  tone(buzzer, E4, QUARTER);
+  delay(QUARTER);
+
+  tone(buzzer, C4, HALF);
+  delay(HALF);
+  noTone(buzzer);
+}
+
+BLYNK_WRITE(V1) {
+Serial.println("Change to Magenta");
+color = strip.Color(255, 0, 255);  // Magenta color
+}
+BLYNK_WRITE(V2) {
+Serial.println("Change to white");
+color = strip.Color(255, 255, 255);  // White
+}
+BLYNK_WRITE(V3) {
+Serial.println("Change to orange");
+color = strip.Color(255, 180, 0);  // Orange  
+}
+BLYNK_WRITE(V4) {
+Serial.println("Change to green");
+color = strip.Color(0, 255, 0);  // Green
+}
+BLYNK_WRITE(V5) {
+  ledState = param.asInt(); // Get value as integer
 }
 
 void OLED_display(int textsize, int y, String text) {
